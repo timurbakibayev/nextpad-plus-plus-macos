@@ -454,13 +454,21 @@ foreach(_lang IN LISTS NPP_BUNDLE_LANGUAGES)
             "$<TARGET_BUNDLE_DIR:NotepadPlusPlusMac>/Contents/Resources/${_lang}.lproj/InfoPlist.strings")
 endforeach()
 
-# Ad-hoc code signing — gives the app a stable identity so macOS can
-# remember TCC permission grants (Downloads, Desktop, Documents) across launches.
+# Code signing — gives the app an identity so macOS can remember TCC permission
+# grants (Downloads, Desktop, Documents) across launches.
 # Strip extended attributes first (resource forks / Finder info break codesign).
+#
+# The default ad-hoc signature ("-") is keyed on the binary's hash, so every
+# rebuild looks like a new app to TCC and the Downloads/Documents prompts come
+# back; two differently-built copies running at once even revoke each other's
+# grant on every "Allow". Set NPP_CODESIGN_IDENTITY to a local code-signing
+# certificate (a self-signed one is enough) to keep the identity stable:
+#   cmake -S . -B build -DNPP_CODESIGN_IDENTITY="Nextpad Dev"
+set(NPP_CODESIGN_IDENTITY "-" CACHE STRING "codesign identity for the app bundle (\"-\" = ad-hoc)")
 add_custom_command(TARGET NotepadPlusPlusMac POST_BUILD
     COMMAND xattr -cr "$<TARGET_BUNDLE_DIR:NotepadPlusPlusMac>"
-    COMMAND codesign --force --deep --sign - "$<TARGET_BUNDLE_DIR:NotepadPlusPlusMac>"
-    COMMENT "Ad-hoc code signing the app bundle")
+    COMMAND codesign --force --deep --sign "${NPP_CODESIGN_IDENTITY}" "$<TARGET_BUNDLE_DIR:NotepadPlusPlusMac>"
+    COMMENT "Code signing the app bundle (${NPP_CODESIGN_IDENTITY})")
 
 set_target_properties(NotepadPlusPlusMac PROPERTIES
     OUTPUT_NAME "Nextpad++"
