@@ -21,6 +21,7 @@
 #include <optional>
 
 #import <Cocoa/Cocoa.h>
+#import <Carbon/Carbon.h>
 #if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5
 #import <QuartzCore/CAGradientLayer.h>
 #endif
@@ -2331,9 +2332,48 @@ static bool ScintillaCommandKey(UniChar originalKey, NSEventModifierFlags modifi
 
 //--------------------------------------------------------------------------------------------------
 
+// LOCAL CHANGE: Command/Control shortcuts on non-Latin keyboard layouts.
+//
+// -charactersIgnoringModifiers reports the letter of the ACTIVE layout, so on
+// Russian or Kazakh Cmd+Shift+U arrives as Cmd+Shift+Г and matches nothing in the
+// keymap, whose letter bindings are Latin. The Edit menu hides this for the
+// commands it carries, but the keymap-only ones (case conversion, line cut,
+// transpose, ...) and every command whose menu item is disabled fell through to
+// Scintilla and silently did nothing. macOS resolves Command shortcuts against the
+// ASCII-capable layout, so do the same: when Command or Control is held and the key
+// produced a non-ASCII letter, look it up by the same physical key on that layout.
+static NSString *CommandKeyCharacters(NSEvent *event) {
+	NSString *input = event.charactersIgnoringModifiers;
+	const NSEventModifierFlags flags = event.modifierFlags;
+	if (!(flags & (NSEventModifierFlagCommand | NSEventModifierFlagControl)) || input.length != 1)
+		return input;
+	const UniChar ch = [input characterAtIndex: 0];
+	if (ch < 0x80 || ch >= 0xF700) // ASCII already, or an arrow/function key
+		return input;
+
+	TISInputSourceRef source = TISCopyCurrentASCIICapableKeyboardLayoutInputSource();
+	if (!source)
+		return input;
+	NSString *latin = nil;
+	CFDataRef layoutData = static_cast<CFDataRef>(TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData));
+	if (layoutData) {
+		const UCKeyboardLayout *layout = reinterpret_cast<const UCKeyboardLayout *>(CFDataGetBytePtr(layoutData));
+		const UInt32 modifierState = (flags & NSEventModifierFlagShift) ? (shiftKey >> 8) : 0;
+		UInt32 deadKeyState = 0;
+		UniChar chars[4];
+		UniCharCount length = 0;
+		if (UCKeyTranslate(layout, event.keyCode, kUCKeyActionDown, modifierState, LMGetKbdType(),
+				   kUCKeyTranslateNoDeadKeysBit, &deadKeyState, 4, &length, chars) == noErr &&
+		    length == 1 && chars[0] < 0x80)
+			latin = [NSString stringWithCharacters: chars length: 1];
+	}
+	CFRelease(source);
+	return latin ?: input;
+}
+
 bool ScintillaCocoa::KeyboardInput(NSEvent *event) {
 	// For now filter out function keys.
-	NSString *input = event.charactersIgnoringModifiers;
+	NSString *input = CommandKeyCharacters(event);
 
 	bool handled = false;
 
@@ -2363,7 +2403,7 @@ bool ScintillaCocoa::KeyboardInput(NSEvent *event) {
  * a raw kmap.Find would wrongly report as commands.
  */
 Message ScintillaCocoa::CommandForKeyEvent(NSEvent *event) {
-	NSString *input = event.charactersIgnoringModifiers;
+	NSString *input = CommandKeyCharacters(event);
 
 	for (size_t i = 0; i < input.length; i++) {
 		Keys key = static_cast<Keys>(0);

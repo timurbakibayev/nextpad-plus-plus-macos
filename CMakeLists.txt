@@ -484,6 +484,7 @@ target_link_libraries(NotepadPlusPlusMac PRIVATE
     "-framework Cocoa"
     "-framework QuartzCore"
     "-framework UniformTypeIdentifiers"
+    "-framework Carbon"   # TIS/UCKeyTranslate: Cmd shortcuts on non-Latin layouts (ScintillaCocoa.mm)
 )
 
 set_source_files_properties(${APP_SRCS} PROPERTIES
