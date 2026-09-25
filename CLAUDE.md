@@ -19,6 +19,7 @@ build/Nextpad++.app/Contents/MacOS/Nextpad++ -nosession -noPlugin file.txt   # C
 
 - Prerequisites are the Xcode Command Line Tools (full Xcode isn't needed) and `brew install cmake`. A clean parallel build takes about 20 s, and the only warnings are deprecations.
 - A dev build shares `~/Library/Application Support/Nextpad++/` and its preferences with any installed `/Applications/Nextpad++.app`. Use `-nosession` so the dev build doesn't touch the real session.
+- Builds are ad-hoc signed by default, so macOS privacy (TCC) grants are tied to the binary's hash and the "access Downloads/Documents" prompts return after every rebuild. Two copies with different hashes running at once also revoke each other's grant on every "Allow". To avoid this, configure with a local signing certificate: `-DNPP_CODESIGN_IDENTITY="Nextpad Dev"`, where "Nextpad Dev" is a self-signed code-signing certificate in the login keychain.
 - New source files have to be added by hand to `APP_SRCS`/`APP_HEADERS` in `CMakeLists.txt`, because there is no glob for `src/`. All app sources compile with `-fobjc-arc`.
 - Post-build steps copy the `resources/` data (themes, localization, functionList, UDLs, the default shortcuts/contextMenu/toolbar XML) into the bundle and then ad-hoc codesign it. When you edit a resource file, rebuild. Don't hand-edit the bundle.
 - The version lives in `CMakeLists.txt` (`MACOSX_BUNDLE_*_VERSION`). Release signing, notarization and DMG tooling live in `tools/` and `signing-config.sh`, which are local only and never committed.
