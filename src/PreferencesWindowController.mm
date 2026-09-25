@@ -234,7 +234,7 @@ NSString *const kPrefStyleFontSize      = @"styleFontSize";
         kPrefFindTransparencyEnabled: @YES,  // matches Windows default
         kPrefFindTransparencyMode:    @0,    // 0=on losing focus, 1=always
         kPrefFindTransparencyAlpha:   @0.5,
-        kPrefClickableLinkEnable:      @YES, // matches Windows default (urlUnderLineFg)
+        kPrefClickableLinkEnable:      @NO,  // off: double-clicking a URL just selects it
         kPrefClickableLinkNoUnderline: @NO,
         kPrefClickableLinkFullBox:     @NO,
         kPrefClickableLinkSchemes:     kDefaultClickableLinkSchemes,
