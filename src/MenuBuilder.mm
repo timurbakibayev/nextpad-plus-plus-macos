@@ -128,7 +128,6 @@ static NSMenu *buildLanguageMenu() {
     NSMenu *appMenu = submenu(@"App");
     appItem.submenu = appMenu;
     [appMenu addItemWithTitle:@"About Nextpad++" action:@selector(showAboutPanel:) keyEquivalent:@""];
-    [appMenu addItemWithTitle:@"Check for Updates…" action:@selector(checkForUpdates:) keyEquivalent:@""];
     [appMenu addItemWithTitle:@"Install nextpad++ Command Line Tool…" action:@selector(installCommandLineTool:) keyEquivalent:@""];
     addSep(appMenu);
     // Apple renamed "Preferences…" to "Settings…" starting in macOS Ventura (13).

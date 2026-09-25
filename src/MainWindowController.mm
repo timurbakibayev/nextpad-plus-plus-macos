@@ -10533,7 +10533,6 @@ static BOOL _writeCLIScript(NSString *script, NSString *path, NSError **outErr) 
     [self buildToolbar];             // rebuild capsules from the new model
 }
 
-// checkForUpdates: moved to AppDelegate
 // showUpdaterProxyStub: removed
 
 - (void)showMacroManager:(id)sender {

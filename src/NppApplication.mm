@@ -53,7 +53,6 @@
         @"showColumnEditor:",
         @"showFindInFiles:",
         @"showCLIHelp:",
-        @"checkForUpdates:",
         @"showUpdaterProxyStub:",
         @"showMacroManager:",
         @"editPopupContextMenu:",
